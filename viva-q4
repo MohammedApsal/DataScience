@@ -1,0 +1,58 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LinearRegression
+
+# Load the dataset
+data = pd.read_csv('housing_data.csv')
+
+# Display the first few rows of the dataset
+print(data.head())
+
+# Define features (X) and target (y)
+X = data.drop(columns=['price'])
+y = data['price']
+
+# Preprocessing: Handle categorical features and scale numerical features
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', StandardScaler(), ['area', 'bedrooms']),
+        ('cat', OneHotEncoder(), ['location'])
+    ])
+
+# Create a pipeline that includes preprocessing and the linear regression model
+model = Pipeline(steps=[
+    ('preprocessor', preprocessor),
+    ('regressor', LinearRegression())
+])
+
+# Split the data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Fit the model to the training data
+model.fit(X_train, y_train)
+
+# Evaluate the model
+test_score = model.score(X_test, y_test)
+print(f'Model R^2 score on test data: {test_score:.2f}')
+
+# Function to predict the price of a new house
+def predict_price(area, bedrooms, location):
+    new_house = pd.DataFrame({
+        'area': [area],
+        'bedrooms': [bedrooms],
+        'location': [location]
+    })
+    prediction = model.predict(new_house)
+    return prediction[0]
+
+# Input features of a new house
+area = 2100
+bedrooms = 3
+location = 1  # Assuming 'location' is already encoded as an integer
+
+# Predict the price for the new house
+predicted_price = predict_price(area, bedrooms, location)
+print(f'The predicted price for the new house is: ${predicted_price:.2f
