@@ -1,0 +1,55 @@
+import pandas as pd
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+
+# Sample data
+data = pd.DataFrame({
+    'customer_id': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    'age': [19, 21, 20, 23, 31, 22, 35, 23, 64, 30],
+    'gender': ['Male', 'Female', 'Female', 'Female', 'Female', 'Male', 'Female', 'Male', 'Female', 'Female'],
+    'annual_income': [15, 15, 16, 16, 17, 17, 18, 18, 19, 19],
+    'spending_score': [39, 81, 6, 77, 40, 76, 6, 94, 3, 72],
+    'purchase_history': [5, 2, 0, 8, 1, 2, 0, 7, 2, 4],
+    'browsing_time': [20, 22, 30, 10, 15, 25, 35, 40, 45, 28]
+})
+
+# Handle missing values (if any)
+data = data.dropna()
+
+# Encode categorical variables (e.g., gender)
+label_encoder = LabelEncoder()
+data['gender'] = label_encoder.fit_transform(data['gender'])
+
+# Scale the features
+scaler = StandardScaler()
+scaled_data = scaler.fit_transform(data.drop(columns=['customer_id']))
+
+# Convert the scaled data back to a DataFrame
+scaled_data = pd.DataFrame(scaled_data, columns=data.columns[1:])
+
+# Feature selection (all columns except customer_id)
+features = scaled_data
+
+# Choose the number of clusters
+num_clusters = 3
+
+# Initialize the KMeans model
+kmeans = KMeans(n_clusters=num_clusters, random_state=42)
+
+# Fit the model to the data
+kmeans.fit(features)
+
+# Get the cluster labels
+data['cluster'] = kmeans.labels_
+
+# Calculate the silhouette score
+silhouette_avg = silhouette_score(features, kmeans.labels_)
+print(f'Silhouette Score: {silhouette_avg}')
+
+# Group the data by cluster and calculate the mean for each feature
+cluster_summary = data.groupby('cluster').mean()
+print(cluster_summary)
+
+# Save the data with cluster labels to a CSV file
+data.to_csv('customer_segments.csv', index=False)
