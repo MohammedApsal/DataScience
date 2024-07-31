@@ -1,0 +1,63 @@
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+import numpy as np
+
+# Load the dataset
+data = pd.read_csv('customer_data.csv')
+
+# Display the first few rows of the dataset
+print(data.head())
+
+# Define features (X)
+X = data.drop(columns=['customer_id'])
+
+# Handle missing values (if any)
+X = X.fillna(X.mean())
+
+# Standardize the features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Determine the optimal number of clusters using the elbow method (optional step)
+def find_optimal_clusters(data, max_k):
+    iters = range(1, max_k+1)
+    sse = []
+    for k in iters:
+        kmeans = KMeans(n_clusters=k, random_state=42)
+        kmeans.fit(data)
+        sse.append(kmeans.inertia_)
+    return sse
+
+# Plot the elbow curve (optional step)
+import matplotlib.pyplot as plt
+
+sse = find_optimal_clusters(X_scaled, 10)
+plt.plot(range(1, 11), sse)
+plt.xlabel('Number of Clusters')
+plt.ylabel('SSE')
+plt.title('Elbow Method')
+plt.show()
+
+# Initialize the K-Means model with the chosen number of clusters (e.g., 3)
+n_clusters = 3
+kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+
+# Fit the model to the customer data
+kmeans.fit(X_scaled)
+
+# Function to assign a new customer to a segment
+def assign_segment(annual_income, spending_score, age):
+    new_customer = np.array([[annual_income, spending_score, age]])
+    new_customer_scaled = scaler.transform(new_customer)
+    segment = kmeans.predict(new_customer_scaled)
+    return segment[0]
+
+# Input features of a new customer
+annual_income = 45000
+spending_score = 60
+age = 30
+
+# Assign the new customer to a segment
+customer_segment = assign_segment(annual_income, spending_score, age)
+print(f'The new customer belongs to segment: {customer_segment}')
