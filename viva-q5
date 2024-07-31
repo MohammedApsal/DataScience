@@ -1,0 +1,59 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+
+# Load the dataset
+data = pd.read_csv('customer_data.csv')
+
+# Display the first few rows of the dataset
+print(data.head())
+
+# Define features (X) and target (y)
+X = data.drop(columns=['customer_id', 'churn'])
+y = data['churn']
+
+# Handle missing values (if any)
+X = X.fillna(X.mean())
+
+# Split the data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Scale the features
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Initialize the Logistic Regression model
+model = LogisticRegression(random_state=42)
+
+# Fit the model to the training data
+model.fit(X_train_scaled, y_train)
+
+# Predict on the test data to evaluate accuracy
+y_pred = model.predict(X_test_scaled)
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Model accuracy on test data: {accuracy:.2f}')
+
+# Function to predict the churn status of a new customer
+def predict_churn(usage_minutes, contract_duration, age, income):
+    new_customer = pd.DataFrame({
+        'usage_minutes': [usage_minutes],
+        'contract_duration': [contract_duration],
+        'age': [age],
+        'income': [income]
+    })
+    new_customer_scaled = scaler.transform(new_customer)
+    prediction = model.predict(new_customer_scaled)
+    return prediction[0]
+
+# Input features of a new customer
+usage_minutes = 450
+contract_duration = 18
+age = 30
+income = 50000
+
+# Predict the churn status for the new customer
+predicted_churn = predict_churn(usage_minutes, contract_duration, age, income)
+print(f'The predicted churn status for the new customer is: {"Churn" if predicted_churn == 1 else "Not Churn"}')
