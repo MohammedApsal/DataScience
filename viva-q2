@@ -1,0 +1,51 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
+
+# Load the dataset
+data = pd.read_csv('patients_data.csv')
+
+# Display the first few rows of the dataset
+print(data.head())
+
+# Split the data into features (X) and target (y)
+X = data.drop(columns=['condition'])  # assuming 'condition' is the target column
+y = data['condition']
+
+# Handle missing values (if any)
+X = X.fillna(X.mean())
+
+# Split the data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Scale the features
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Function to predict the condition of a new patient
+def predict_condition(new_patient_features, k):
+    # Initialize the KNN model
+    knn = KNeighborsClassifier(n_neighbors=k)
+    
+    # Fit the model to the training data
+    knn.fit(X_train_scaled, y_train)
+    
+    # Scale the new patient features
+    new_patient_scaled = scaler.transform([new_patient_features])
+    
+    # Predict the condition
+    prediction = knn.predict(new_patient_scaled)
+    
+    return prediction[0]
+
+# Input features of a new patient
+new_patient = [45, 1, 0.5, 120, 80]  # example features
+k = 3  # example value of k
+
+# Predict the condition for the new patient
+condition_prediction = predict_condition(new_patient, k)
+
+print(f'The predicted condition for the new patient is: {condition_prediction}')
